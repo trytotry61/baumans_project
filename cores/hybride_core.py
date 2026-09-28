@@ -4,8 +4,6 @@ import tracemalloc
 import heapq
 
 SQRT2 = math.sqrt(2)
-
-# --- 1. СГЛАЖИВАНИЕ И АНИМАЦИЯ ---
 def smooth_path_chaikin(points, iterations=3):
     """Сглаживает углы 90°/45° алгоритмом Чайкина (Corner Cutting)."""
     if len(points) < 3:

@@ -1,7 +1,10 @@
 import pygame
 import sys
-from dstar_lite_core import smooth_path_chaikin, get_partial_path, DStarLiteSolver
-
+import concurrent.futures
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(PROJECT_ROOT))
+from cores.dstar_lite_core import smooth_path_chaikin, get_partial_path, DStarLiteSolver
 CELL_SIZE = 26
 HUD_HEIGHT = 80
 

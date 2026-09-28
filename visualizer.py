@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent
+METRICS_DIR = PROJECT_ROOT / "metrics"
 def load_and_combine_data(files):
     """Считывает CSV файлы, очищает от NaN/inf и объединяет в один DataFrame."""
     dfs = []
@@ -82,12 +85,19 @@ def create_dashboard(df, output_filename="benchmark_dashboard.png"):
     plt.savefig(output_filename, dpi=300)
     print(f"Дашборд успешно сохранен в файл: {output_filename}")
     plt.show()
+
 if __name__ == "__main__":
-    csv_files = ["metrics_cbs.csv", "metrics_dstar.csv", "metrics_hybrid.csv"]
+    csv_files = [
+        METRICS_DIR / "metrics_cbs.csv",
+        METRICS_DIR / "metrics_dstar.csv",
+        METRICS_DIR / "metrics_hybride.csv"
+    ]
+    
+    dashboard_output = METRICS_DIR / "benchmark_dashboard.png"
     
     try:
         data = load_and_combine_data(csv_files)
         print_summary_statistics(data)
-        create_dashboard(data)
+        create_dashboard(data, output_filename=dashboard_output)
     except Exception as e:
         print(f"Ошибка при обработке данных: {e}")
