@@ -7,14 +7,17 @@ sys.path.append(str(PROJECT_ROOT))
 from cores.hybride_core import smooth_path_chaikin, get_partial_path, CBSDStarLiteSolver
 
 
-
 CELL_SIZE = 26
 HUD_HEIGHT = 80
 
+
 AGENT_THEMES = [
-    {"main": (16, 185, 129), "glow": (186, 230, 253), "robot": (5, 150, 105)},
-    {"main": (245, 158, 11), "glow": (254, 243, 199), "robot": (217, 119, 6)},
-    {"main": (139, 92, 246), "glow": (233, 213, 255), "robot": (124, 58, 237)}
+    # Бирюзовый
+    {"main": (20, 184, 166), "glow": (204, 251, 241), "robot": (13, 148, 136)},
+    # Синий
+    {"main": (37, 99, 235), "glow": (219, 234, 254), "robot": (29, 78, 216)},
+    # Красный
+    {"main": (239, 68, 68), "glow": (254, 226, 226), "robot": (185, 28, 28)}
 ]
 
 class PathfindingGUI:
@@ -35,6 +38,7 @@ class PathfindingGUI:
         self.LINE_GROWTH_SPEED = 0.010
         self.ROBOT_SPEED = 0.40
         self.recalculate()
+
     def recalculate(self):
         solver = CBSDStarLiteSolver(
             self.cols, self.rows, self.starts, self.goals,
@@ -53,6 +57,7 @@ class PathfindingGUI:
             self.smoothed_paths.append(smooth_path_chaikin(pixel_pts, iterations=3))
         self.path_reveal_progress = 0.0
         self.agent_states = [{"idx": 0, "sub": 0.0} for _ in range(len(self.starts))]
+
     def run(self):
         running = True
         while running:
@@ -76,6 +81,7 @@ class PathfindingGUI:
             self.clock.tick(60)
         pygame.quit()
         sys.exit()
+
     def draw(self):
         self.screen.fill((248, 249, 250))
         pygame.draw.rect(self.screen, (255, 255, 255), (0, 0, self.width, HUD_HEIGHT))
@@ -88,16 +94,16 @@ class PathfindingGUI:
         t2 = self.font.render(info_txt, True, (16, 185, 129) if is_found else (225, 29, 72))
         self.screen.blit(t1, (15, 12))
         self.screen.blit(t2, (15, 38))
-        legend_x = self.width - 280
-        legend_y = 15
-        legend_x = self.width - 340
+
+        legend_x = self.width - 360
         legend_y = 12
         leg_title = self.font.render("Легенда (Старт / Цель):", True, (100, 116, 139))
         self.screen.blit(leg_title, (legend_x, legend_y))
+        
         for idx, theme in enumerate(AGENT_THEMES):
             if idx >= len(self.starts):
                 break
-            item_x = legend_x + (idx * 105)
+            item_x = legend_x + (idx * 115)
             item_y = legend_y + 22
             pygame.draw.rect(self.screen, theme["main"], (item_x, item_y + 4, 12, 12), border_radius=2)
             target_box_rect = (item_x + 18, item_y + 4, 12, 12)
@@ -105,6 +111,16 @@ class PathfindingGUI:
             pygame.draw.rect(self.screen, theme["main"], target_box_rect, 2, border_radius=2)
             agent_lbl = self.font.render(f"Р{idx + 1}", True, (30, 41, 59))
             self.screen.blit(agent_lbl, (item_x + 36, item_y))
+
+            # Красный медицинский крест рядом с бирюзовым агентом (индекс 0)
+            if idx == 0:
+                cross_cx = item_x + 62
+                cross_cy = item_y + 10
+                red_cross_color = (220, 38, 38)
+                # Горизонтальная и вертикальная линии креста
+                pygame.draw.rect(self.screen, red_cross_color, (cross_cx - 6, cross_cy - 2, 12, 4))
+                pygame.draw.rect(self.screen, red_cross_color, (cross_cx - 2, cross_cy - 6, 4, 12))
+
         for x in range(self.cols):
             for y in range(self.rows):
                 rect = (x * CELL_SIZE, HUD_HEIGHT + y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
@@ -114,8 +130,10 @@ class PathfindingGUI:
                     pygame.draw.rect(self.screen, (47, 63, 86), rect)
                 elif cell in self.dynamic_obs:
                     pygame.draw.rect(self.screen, (225, 29, 72), rect)
+
         if self.path_reveal_progress < 1.0:
             self.path_reveal_progress = min(1.0, self.path_reveal_progress + self.LINE_GROWTH_SPEED)
+
         for idx, smooth_pts in enumerate(self.smoothed_paths):
             if not smooth_pts:
                 continue
@@ -129,6 +147,7 @@ class PathfindingGUI:
             g_rect = (gp[0] * CELL_SIZE + 3, HUD_HEIGHT + gp[1] * CELL_SIZE + 3, CELL_SIZE - 6, CELL_SIZE - 6)
             pygame.draw.rect(self.screen, theme["main"], s_rect, border_radius=4)
             pygame.draw.rect(self.screen, theme["main"], g_rect, 2, border_radius=4)
+
         for idx, smooth_pts in enumerate(self.smoothed_paths):
             if len(smooth_pts) < 2:
                 continue
@@ -145,5 +164,24 @@ class PathfindingGUI:
             rx = p1[0] + (p2[0] - p1[0]) * st["sub"]
             ry = p1[1] + (p2[1] - p1[1]) * st["sub"]
             theme = AGENT_THEMES[idx % len(AGENT_THEMES)]
+            if idx != 0:
+                dx = p2[0] - p1[0]
+                dy = p2[1] - p1[1]
+                dist = (dx**2 + dy**2) ** 0.5
+                nx, ny = (dx / dist, dy / dist) if dist > 0 else (0, 0)
+                cargo_offset = 15
+                cargo_x = rx - nx * cargo_offset
+                cargo_y = ry - ny * cargo_offset
+                pygame.draw.line(self.screen, (100, 116, 139), (int(rx), int(ry)), (int(cargo_x), int(cargo_y)), 2)
+                box_size = 12
+                cargo_rect = pygame.Rect(
+                    int(cargo_x - box_size // 2),
+                    int(cargo_y - box_size // 2),
+                    box_size,
+                    box_size
+                )
+                pygame.draw.rect(self.screen, (217, 119, 6), cargo_rect, border_radius=2)
+                pygame.draw.rect(self.screen, (120, 53, 15), cargo_rect, 1, border_radius=2)
             pygame.draw.circle(self.screen, theme["robot"], (int(rx), int(ry)), CELL_SIZE // 3)
+
         pygame.display.flip()
