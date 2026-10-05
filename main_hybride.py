@@ -1,5 +1,6 @@
 import concurrent.futures
 import sys
+import random
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -10,12 +11,18 @@ def main():
     cols, rows = 36, 22
     starts = [(2, 2), (2, 19), (33, 2)]
     goals = [(33, 19), (33, 2), (2, 19)]
+    
     static_obs = set()
-    for y in range(5, 17, 4):
-        for x in range(5, 31):
-            if x % 6 != 0:
-                static_obs.add((x, y))
+    obstacle_density = 0.20  
+    for x in range(cols):
+        for y in range(rows):
+            if random.random() < obstacle_density:
+                pos = (x, y)
+                if pos not in starts and pos not in goals:
+                    static_obs.add(pos)
+
     app = PathfindingGUI(cols, rows, starts, goals, static_obs)
     app.run()
+
 if __name__ == "__main__":
     main()
